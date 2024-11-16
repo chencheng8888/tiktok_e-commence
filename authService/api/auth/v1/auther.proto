@@ -1,0 +1,45 @@
+syntax="proto3";
+
+package auth.v1;
+
+option go_package="authService/api/auth/v1";
+
+service AuthService {
+  //  分发令牌
+  rpc DeliverTokenByRPC(DeliverTokenReq) returns (DeliveryResp) {}
+  //  鉴权(判断请求能否通过)
+  rpc VerifyTokenByRPC(VerifyTokenReq) returns (VerifyResp) {}
+  //  将用户加入黑名单
+  rpc AddUserToBlackList(AddUserToBlackListReq) returns (AddUserToBlackListResp) {}
+  //  将用户移出黑名单
+  rpc RemoveUserFromBlackList(RemoveUserFromBlackListReq) returns (RemoveUserFromBlackListResp) {}
+}
+
+message DeliverTokenReq {
+  int32  user_id= 1;
+}
+
+message VerifyTokenReq {
+  string token = 1;
+}
+message AddUserToBlackListReq {
+  int32  user_id= 1;
+}
+message RemoveUserFromBlackListReq {
+  int32  user_id= 1;
+}
+
+
+message DeliveryResp {
+  string token = 1;
+}
+
+message VerifyResp {
+  bool res = 1;
+}
+message AddUserToBlackListResp {
+  bool res = 1;
+}
+message RemoveUserFromBlackListResp {
+  bool res = 1;
+}
