@@ -1,6 +1,9 @@
 package token
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestJwt(t *testing.T) {
 	j := NewJWTer()
@@ -12,6 +15,7 @@ func TestJwt(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	fmt.Println(tokenString)
 	res, err := j.VerifyJwtToken(tokenString, Secret)
 	if err != nil {
 		t.Error(err)

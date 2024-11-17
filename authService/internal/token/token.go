@@ -2,7 +2,9 @@ package token
 
 import (
 	"errors"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"time"
 )
 
 var (
@@ -12,6 +14,7 @@ var (
 	InvalidUserID    int32 = -1
 )
 
+// JWTer 实现了redis.TokenProxy接口
 type JWTer struct{}
 
 func NewJWTer() *JWTer {
@@ -24,10 +27,10 @@ func (j *JWTer) GenerateJwtToken(userID int32, jwtSecret string) (string, error)
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["userID"] = userID
-
+	claims["timestamp"] = time.Now().Unix()
 	tokenString, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
-		return "", ErrSignString
+		return "", fmt.Errorf("%w:%s", ErrSignString, err.Error())
 	}
 	return tokenString, nil
 }
@@ -37,7 +40,7 @@ func (j *JWTer) VerifyJwtToken(tokenString, jwtSecret string) (int32, error) {
 		return []byte(jwtSecret), nil
 	})
 	if err != nil {
-		return InvalidUserID, ErrParseJwtToken
+		return InvalidUserID, fmt.Errorf("%w:%s", ErrParseJwtToken, err.Error())
 	}
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
