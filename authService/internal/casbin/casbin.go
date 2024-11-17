@@ -113,11 +113,11 @@ func (a *AuthCase) AssignAuthority(userID int32, role string) error {
 	// 为用户分配角色
 	_, err := a.c.AddGroupingPolicy(id, role)
 	if err != nil {
-		return ErrAssignRole
+		return fmt.Errorf("%w:%s", ErrAssignRole, err.Error())
 	}
 	//保存
 	if err := a.c.SavePolicy(); err != nil {
-		return ErrSavePolicy
+		return fmt.Errorf("%w:%s", ErrSavePolicy, err.Error())
 	}
 	return nil
 }
@@ -140,7 +140,7 @@ func (a *AuthCase) VerifyAuthority(userID int32, obj, act string) (bool, error) 
 	id := fmt.Sprintf("%d", userID)
 	ok, err := a.c.Enforce(id, obj, act)
 	if err != nil {
-		return false, ErrCasBinEnforce
+		return false, fmt.Errorf("%w:%s", ErrCasBinEnforce, err.Error())
 	}
 	return ok, nil
 }
