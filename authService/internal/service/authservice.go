@@ -2,27 +2,91 @@ package service
 
 import (
 	"context"
-
 	pb "github.com/chencheng8888/tiktok_e-commence/authService/api/auth/v1"
 )
 
-type AuthServiceService struct {
-	pb.UnimplementedAuthServiceServer
+type AuthHandler interface {
+	DeliverToken(ctx context.Context, userID int32) (string, error)
+	VerifyToken(ctx context.Context, tokenString *string, obj string, act string) (bool, error)
+	GiveAuthority(ctx context.Context, userID int32, role string) error
+	RemoveAuthority(ctx context.Context, userID int32, role string) error
 }
 
-func NewAuthServiceService() *AuthServiceService {
-	return &AuthServiceService{}
+type AuthServiceService struct {
+	pb.UnimplementedAuthServiceServer
+	authHandler AuthHandler
+}
+
+func NewAuthServiceService(authHandler AuthHandler) *AuthServiceService {
+	return &AuthServiceService{
+		authHandler: authHandler,
+	}
 }
 
 func (s *AuthServiceService) DeliverTokenByRPC(ctx context.Context, req *pb.DeliverTokenReq) (*pb.DeliveryResp, error) {
-	return &pb.DeliveryResp{}, nil
+	token, err := s.authHandler.DeliverToken(ctx, req.GetUserId())
+	if err != nil {
+		return &pb.DeliveryResp{}, err
+	}
+	return &pb.DeliveryResp{
+		Token: token,
+	}, nil
 }
 func (s *AuthServiceService) VerifyTokenByRPC(ctx context.Context, req *pb.VerifyTokenReq) (*pb.VerifyResp, error) {
-	return &pb.VerifyResp{}, nil
+
+	obj, ok := TransformObj(req.GetObj())
+	if !ok {
+		return &pb.VerifyResp{
+			Res: false,
+		}, ErrParseObj
+	}
+	act, ok := TransformAct(req.GetAct())
+	if !ok {
+		return &pb.VerifyResp{
+			Res: false,
+		}, ErrParseAct
+	}
+	ok, err := s.authHandler.VerifyToken(ctx, req.Token, obj, act)
+	if err != nil {
+		return &pb.VerifyResp{
+			Res: false,
+		}, err
+	}
+	return &pb.VerifyResp{
+		Res: ok,
+	}, nil
 }
-func (s *AuthServiceService) AddUserToBlackList(ctx context.Context, req *pb.AddUserToBlackListReq) (*pb.AddUserToBlackListResp, error) {
-	return &pb.AddUserToBlackListResp{}, nil
+func (s *AuthServiceService) AssignRole(ctx context.Context, req *pb.AssignRoleReq) (*pb.AssignResp, error) {
+	role, ok := TransformRole(req.GetRole())
+	if !ok {
+		return &pb.AssignResp{
+			Res: false,
+		}, ErrParseRole
+	}
+	err := s.authHandler.GiveAuthority(ctx, req.GetUserId(), role)
+	if err != nil {
+		return &pb.AssignResp{
+			Res: false,
+		}, err
+	}
+	return &pb.AssignResp{
+		Res: true,
+	}, nil
 }
-func (s *AuthServiceService) RemoveUserFromBlackList(ctx context.Context, req *pb.RemoveUserFromBlackListReq) (*pb.RemoveUserFromBlackListResp, error) {
-	return &pb.RemoveUserFromBlackListResp{}, nil
+func (s *AuthServiceService) RemoveRole(ctx context.Context, req *pb.RemoveRoleReq) (*pb.RemoveResp, error) {
+	role, ok := TransformRole(req.GetRole())
+	if !ok {
+		return &pb.RemoveResp{
+			Res: false,
+		}, ErrParseRole
+	}
+	err := s.authHandler.RemoveAuthority(ctx, req.GetUserId(), role)
+	if err != nil {
+		return &pb.RemoveResp{
+			Res: false,
+		}, err
+	}
+	return &pb.RemoveResp{
+		Res: true,
+	}, nil
 }
