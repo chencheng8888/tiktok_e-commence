@@ -19,10 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_DeliverTokenByRPC_FullMethodName       = "/auth.v1.AuthService/DeliverTokenByRPC"
-	AuthService_VerifyTokenByRPC_FullMethodName        = "/auth.v1.AuthService/VerifyTokenByRPC"
-	AuthService_AddUserToBlackList_FullMethodName      = "/auth.v1.AuthService/AddUserToBlackList"
-	AuthService_RemoveUserFromBlackList_FullMethodName = "/auth.v1.AuthService/RemoveUserFromBlackList"
+	AuthService_DeliverTokenByRPC_FullMethodName = "/auth.v1.AuthService/DeliverTokenByRPC"
+	AuthService_VerifyTokenByRPC_FullMethodName  = "/auth.v1.AuthService/VerifyTokenByRPC"
+	AuthService_AssignRole_FullMethodName        = "/auth.v1.AuthService/AssignRole"
+	AuthService_RemoveRole_FullMethodName        = "/auth.v1.AuthService/RemoveRole"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -33,10 +33,8 @@ type AuthServiceClient interface {
 	DeliverTokenByRPC(ctx context.Context, in *DeliverTokenReq, opts ...grpc.CallOption) (*DeliveryResp, error)
 	// 鉴权(判断请求能否通过)
 	VerifyTokenByRPC(ctx context.Context, in *VerifyTokenReq, opts ...grpc.CallOption) (*VerifyResp, error)
-	// 将用户加入黑名单
-	AddUserToBlackList(ctx context.Context, in *AddUserToBlackListReq, opts ...grpc.CallOption) (*AddUserToBlackListResp, error)
-	// 将用户移出黑名单
-	RemoveUserFromBlackList(ctx context.Context, in *RemoveUserFromBlackListReq, opts ...grpc.CallOption) (*RemoveUserFromBlackListResp, error)
+	AssignRole(ctx context.Context, in *AssignRoleReq, opts ...grpc.CallOption) (*AssignResp, error)
+	RemoveRole(ctx context.Context, in *RemoveRoleReq, opts ...grpc.CallOption) (*RemoveResp, error)
 }
 
 type authServiceClient struct {
@@ -67,20 +65,20 @@ func (c *authServiceClient) VerifyTokenByRPC(ctx context.Context, in *VerifyToke
 	return out, nil
 }
 
-func (c *authServiceClient) AddUserToBlackList(ctx context.Context, in *AddUserToBlackListReq, opts ...grpc.CallOption) (*AddUserToBlackListResp, error) {
+func (c *authServiceClient) AssignRole(ctx context.Context, in *AssignRoleReq, opts ...grpc.CallOption) (*AssignResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AddUserToBlackListResp)
-	err := c.cc.Invoke(ctx, AuthService_AddUserToBlackList_FullMethodName, in, out, cOpts...)
+	out := new(AssignResp)
+	err := c.cc.Invoke(ctx, AuthService_AssignRole_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authServiceClient) RemoveUserFromBlackList(ctx context.Context, in *RemoveUserFromBlackListReq, opts ...grpc.CallOption) (*RemoveUserFromBlackListResp, error) {
+func (c *authServiceClient) RemoveRole(ctx context.Context, in *RemoveRoleReq, opts ...grpc.CallOption) (*RemoveResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RemoveUserFromBlackListResp)
-	err := c.cc.Invoke(ctx, AuthService_RemoveUserFromBlackList_FullMethodName, in, out, cOpts...)
+	out := new(RemoveResp)
+	err := c.cc.Invoke(ctx, AuthService_RemoveRole_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -95,10 +93,8 @@ type AuthServiceServer interface {
 	DeliverTokenByRPC(context.Context, *DeliverTokenReq) (*DeliveryResp, error)
 	// 鉴权(判断请求能否通过)
 	VerifyTokenByRPC(context.Context, *VerifyTokenReq) (*VerifyResp, error)
-	// 将用户加入黑名单
-	AddUserToBlackList(context.Context, *AddUserToBlackListReq) (*AddUserToBlackListResp, error)
-	// 将用户移出黑名单
-	RemoveUserFromBlackList(context.Context, *RemoveUserFromBlackListReq) (*RemoveUserFromBlackListResp, error)
+	AssignRole(context.Context, *AssignRoleReq) (*AssignResp, error)
+	RemoveRole(context.Context, *RemoveRoleReq) (*RemoveResp, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -115,11 +111,11 @@ func (UnimplementedAuthServiceServer) DeliverTokenByRPC(context.Context, *Delive
 func (UnimplementedAuthServiceServer) VerifyTokenByRPC(context.Context, *VerifyTokenReq) (*VerifyResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyTokenByRPC not implemented")
 }
-func (UnimplementedAuthServiceServer) AddUserToBlackList(context.Context, *AddUserToBlackListReq) (*AddUserToBlackListResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddUserToBlackList not implemented")
+func (UnimplementedAuthServiceServer) AssignRole(context.Context, *AssignRoleReq) (*AssignResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AssignRole not implemented")
 }
-func (UnimplementedAuthServiceServer) RemoveUserFromBlackList(context.Context, *RemoveUserFromBlackListReq) (*RemoveUserFromBlackListResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RemoveUserFromBlackList not implemented")
+func (UnimplementedAuthServiceServer) RemoveRole(context.Context, *RemoveRoleReq) (*RemoveResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveRole not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -178,38 +174,38 @@ func _AuthService_VerifyTokenByRPC_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_AddUserToBlackList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddUserToBlackListReq)
+func _AuthService_AssignRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AssignRoleReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).AddUserToBlackList(ctx, in)
+		return srv.(AuthServiceServer).AssignRole(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_AddUserToBlackList_FullMethodName,
+		FullMethod: AuthService_AssignRole_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).AddUserToBlackList(ctx, req.(*AddUserToBlackListReq))
+		return srv.(AuthServiceServer).AssignRole(ctx, req.(*AssignRoleReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_RemoveUserFromBlackList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveUserFromBlackListReq)
+func _AuthService_RemoveRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveRoleReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).RemoveUserFromBlackList(ctx, in)
+		return srv.(AuthServiceServer).RemoveRole(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_RemoveUserFromBlackList_FullMethodName,
+		FullMethod: AuthService_RemoveRole_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).RemoveUserFromBlackList(ctx, req.(*RemoveUserFromBlackListReq))
+		return srv.(AuthServiceServer).RemoveRole(ctx, req.(*RemoveRoleReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -230,12 +226,12 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AuthService_VerifyTokenByRPC_Handler,
 		},
 		{
-			MethodName: "AddUserToBlackList",
-			Handler:    _AuthService_AddUserToBlackList_Handler,
+			MethodName: "AssignRole",
+			Handler:    _AuthService_AssignRole_Handler,
 		},
 		{
-			MethodName: "RemoveUserFromBlackList",
-			Handler:    _AuthService_RemoveUserFromBlackList_Handler,
+			MethodName: "RemoveRole",
+			Handler:    _AuthService_RemoveRole_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
