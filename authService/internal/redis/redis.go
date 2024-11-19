@@ -9,7 +9,7 @@ import (
 )
 
 // ProviderSet is redis providers.
-var ProviderSet = wire.NewSet(NewRedisDB)
+var ProviderSet = wire.NewSet(NewRedisDB, NewCache)
 
 // NewRedisDB 连接redis
 func NewRedisDB(c *conf.Data) *redis.Client {

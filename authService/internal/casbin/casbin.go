@@ -38,7 +38,7 @@ func NewAuthCase(cf *conf.Data) *AuthCase {
 	if err != nil {
 		panic(err)
 	}
-	e, err := casbin.NewEnforcer("./model.conf", a)
+	e, err := casbin.NewEnforcer("authService/internal/casbin/model.conf", a)
 	if err != nil {
 		panic(err)
 	}
@@ -97,7 +97,7 @@ func initPolicy(e *casbin.Enforcer) error {
 	}
 
 	// 默认添加0为traveler
-	_, err = e.AddGroupingPolicy(model.TravelerUserID, model.Traveler)
+	_, err = e.AddGroupingPolicy(fmt.Sprintf("%d", model.TravelerUserID), model.Traveler)
 	if err != nil {
 		return fmt.Errorf("%w:%s", ErrAssignRole, err.Error())
 	}
