@@ -38,20 +38,20 @@ func NewVerifier(client CacheProxy, t TokenVerifyer, cf *conf.Token) *Verifyer {
 // VerifyToken 检查token是否合法
 // 如果不合法就返回false
 // 如果合法,异步为token续期
-func (v *Verifyer) VerifyToken(ctx context.Context, tokenString string) (bool, error) {
+func (v *Verifyer) VerifyToken(ctx context.Context, tokenString string) (int32, error) {
 	userID, err := v.t.VerifyJwtToken(tokenString, v.cf.Secret)
 	if err != nil {
-		return false, err
+		return userID, err
 	}
 
 	storedToken, err := v.getStoredToken(ctx, userID)
 	// 如果该token未找到
 	if errors.Is(err, redis.Nil) {
-		return false, ErrTokenNotFound
+		return userID, ErrTokenNotFound
 	}
 	// 如果传入的token与查到的token不一致也报错
 	if storedToken != tokenString {
-		return false, ErrTokenInvalid
+		return userID, ErrTokenInvalid
 	}
 
 	// 异步去为token续期,根据剩余时间的多少
@@ -64,7 +64,7 @@ func (v *Verifyer) VerifyToken(ctx context.Context, tokenString string) (bool, e
 			}
 		}
 	}()
-	return true, nil
+	return userID, nil
 }
 
 // 为token续期逻辑

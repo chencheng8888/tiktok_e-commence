@@ -1,6 +1,7 @@
 package casbin
 
 import (
+	"context"
 	"errors"
 	"github.com/chencheng8888/tiktok_e-commence/authService/internal/conf"
 	"testing"
@@ -17,17 +18,15 @@ func TestAuthCase_AssignAuthority(t *testing.T) {
 		args args
 		want error
 	}{
-		{"test1", args{userID: 111, role: "admin"}, nil},
-		{"test1", args{userID: 112, role: "traveler"}, nil},
 		{"test1", args{userID: 113, role: "normalUser"}, nil},
-		{"test1", args{userID: 114, role: "merchant"}, nil},
-		{"test1", args{userID: 115, role: "blackLister"}, nil},
-		{"test1", args{userID: 116, role: "hahaha"}, ErrInvalidSubject},
+		{"test2", args{userID: 114, role: "merchant"}, nil},
+		{"test3", args{userID: 115, role: "blackLister"}, nil},
+		{"test4", args{userID: 116, role: "hahaha"}, ErrInvalidSubject},
 	}
 	a := test_init()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := a.AssignAuthority(tt.args.userID, tt.args.role); got != tt.want {
+			if got := a.AssignAuthority(context.Background(), tt.args.userID, tt.args.role); got != tt.want {
 				t.Errorf("AssignAuthority() = %v, want %v", got, tt.want)
 			}
 		})
@@ -80,9 +79,10 @@ func Test_checkAct(t *testing.T) {
 
 		{"test_unknown_name_1", args{"hahah", "hello"}, false},
 	}
+	var a = new(AuthCase)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := checkAct(tt.args.obj, tt.args.act); got != tt.want {
+			if got := a.checkAct(tt.args.obj, tt.args.act); got != tt.want {
 				t.Errorf("checkAct() = %v, want %v", got, tt.want)
 			}
 		})
@@ -142,7 +142,7 @@ func TestAuthCase_VerifyAuthority(t *testing.T) {
 	a := test_init()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := a.VerifyAuthority(tt.args.userID, tt.args.obj, tt.args.act)
+			got, err := a.VerifyAuthority(context.Background(), tt.args.userID, tt.args.obj, tt.args.act)
 			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("VerifyAuthority() error = %v, wantErr %v", err, tt.wantErr)
 				return

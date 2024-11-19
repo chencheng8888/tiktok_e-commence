@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/google/wire"
 	"time"
 )
 
@@ -13,6 +14,9 @@ var (
 	ErrInvalidToken        = errors.New("invalid token")
 	InvalidUserID    int32 = -1
 )
+
+// ProviderSet is token providers.
+var ProviderSet = wire.NewSet(NewJWTer)
 
 // JWTer 实现了redis.TokenProxy接口
 type JWTer struct{}

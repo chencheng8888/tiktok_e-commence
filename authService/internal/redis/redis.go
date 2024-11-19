@@ -4,8 +4,12 @@ import (
 	"context"
 	"github.com/chencheng8888/tiktok_e-commence/authService/internal/conf"
 	"github.com/go-redis/redis"
+	"github.com/google/wire"
 	"time"
 )
+
+// ProviderSet is redis providers.
+var ProviderSet = wire.NewSet(NewRedisDB)
 
 // NewRedisDB 连接redis
 func NewRedisDB(c *conf.Data) *redis.Client {

@@ -10,6 +10,19 @@ const (
 
 	ALLOW = "allow"
 	DENY  = "deny"
+
+	TravelerUserID = 0
+
+	Create = "CREATE"
+	Update = "UPDATE"
+	Login  = "LOGIN"
+	Logout = "LOGOUT"
+	Delete = "DELETE"
+	Get    = "GET"
+	Clear  = "CLEAR"
+	Pay    = "PAY"
+	Cancel = "CANCEL"
+	Settle = "SETTLE"
 )
 
 // object

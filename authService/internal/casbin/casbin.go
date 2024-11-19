@@ -1,6 +1,7 @@
 package casbin
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/casbin/casbin/v2"
@@ -16,10 +17,11 @@ var (
 	ErrSavePolicy     = errors.New("save policy failed")
 	ErrCasBinEnforce  = errors.New("casbin enforce policy failed")
 	ErrInvalidAct     = errors.New("invalid act")
+	ErrRemoveRole     = errors.New("remove role failed")
 )
 
 // ProviderSet is casbin providers.
-var ProviderSet = wire.NewSet()
+var ProviderSet = wire.NewSet(NewAuthCase)
 
 type CheckActer interface {
 	CheckActExist(act string) bool
@@ -93,6 +95,13 @@ func initPolicy(e *casbin.Enforcer) error {
 	if err != nil {
 		return err
 	}
+
+	// 默认添加0为traveler
+	_, err = e.AddGroupingPolicy(model.TravelerUserID, model.Traveler)
+	if err != nil {
+		return fmt.Errorf("%w:%s", ErrAssignRole, err.Error())
+	}
+
 	err = e.SavePolicy()
 	if err != nil {
 		return err
@@ -102,16 +111,14 @@ func initPolicy(e *casbin.Enforcer) error {
 
 // AssignAuthority 为用户分配权限
 // 成功返回true,失败返回false
-func (a *AuthCase) AssignAuthority(userID int32, role string) error {
-	//判断角色是否合法
-	switch role {
-	case model.Admin, model.Traveler, model.NormalUser, model.Merchant, model.BlackLister:
-	default:
-		return ErrInvalidSubject
+func (a *AuthCase) AssignAuthority(ctx context.Context, userID int32, role string) error {
+	err := a.checkRole(role)
+	if err != nil {
+		return err
 	}
-	id := fmt.Sprintf("%d", userID)
+	id := a.generateUserID(userID)
 	// 为用户分配角色
-	_, err := a.c.AddGroupingPolicy(id, role)
+	_, err = a.c.AddGroupingPolicy(id, role)
 	if err != nil {
 		return fmt.Errorf("%w:%s", ErrAssignRole, err.Error())
 	}
@@ -132,12 +139,12 @@ func (a *AuthCase) AssignAuthority(userID int32, role string) error {
 // pay : "PAY","CANCEL"
 // order : "CREATE","UPDATE","SETTLE"
 // item : "CREATE","DELETE","UPDATE","GET"
-func (a *AuthCase) VerifyAuthority(userID int32, obj, act string) (bool, error) {
-	if !checkAct(obj, act) {
+func (a *AuthCase) VerifyAuthority(ctx context.Context, userID int32, obj, act string) (bool, error) {
+	if !a.checkAct(obj, act) {
 		return false, ErrInvalidAct
 	}
 
-	id := fmt.Sprintf("%d", userID)
+	id := a.generateUserID(userID)
 	ok, err := a.c.Enforce(id, obj, act)
 	if err != nil {
 		return false, fmt.Errorf("%w:%s", ErrCasBinEnforce, err.Error())
@@ -145,9 +152,32 @@ func (a *AuthCase) VerifyAuthority(userID int32, obj, act string) (bool, error) 
 	return ok, nil
 }
 
+func (a *AuthCase) RemoveAuthority(ctx context.Context, userID int32, role string) error {
+	err := a.checkRole(role)
+	if err != nil {
+		return err
+	}
+	id := a.generateUserID(userID)
+	_, err = a.c.RemoveGroupingPolicy(id, role)
+	if err != nil {
+		return fmt.Errorf("%w:%s", ErrRemoveRole, err.Error())
+	}
+	return nil
+}
+
+// 判断角色是否合法
+func (a *AuthCase) checkRole(role string) error {
+	switch role {
+	case model.NormalUser, model.Merchant, model.BlackLister:
+	default:
+		return ErrInvalidSubject
+	}
+	return nil
+}
+
 // 检查对obj是否有act操作
 // 使用映射来减少 switch 语句
-func checkAct(obj, act string) bool {
+func (a *AuthCase) checkAct(obj, act string) bool {
 	// 定义一个映射，直接将 obj 映射到具体的类型
 	acters := map[string]CheckActer{
 		model.U.String(): model.User{},
@@ -165,4 +195,8 @@ func checkAct(obj, act string) bool {
 
 	// 调用 CheckActExist 方法
 	return checker.CheckActExist(act)
+}
+
+func (a *AuthCase) generateUserID(userID int32) string {
+	return fmt.Sprintf("%d", userID)
 }

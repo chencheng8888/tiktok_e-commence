@@ -13,15 +13,15 @@ func (o Order) String() string {
 // act
 
 func (o Order) Create() string {
-	return "CREATE"
+	return Create
 }
 func (o Order) Update() string {
-	return "UPDATE"
+	return Update
 }
 
 // Settle 结算订单
 func (o Order) Settle() string {
-	return "SETTLE"
+	return Settle
 }
 
 // CheckActExist 检查对于order,act是否合法

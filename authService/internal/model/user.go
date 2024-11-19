@@ -13,22 +13,22 @@ func (u User) String() string {
 // act
 
 func (u User) Create() string {
-	return "CREATE"
+	return Create
 }
 func (u User) Login() string {
-	return "LOGIN"
+	return Login
 }
 func (u User) Logout() string {
-	return "LOGOUT"
+	return Logout
 }
 func (u User) Delete() string {
-	return "DELETE"
+	return Delete
 }
 func (u User) Update() string {
-	return "UPDATE"
+	return Update
 }
 func (u User) GetInfo() string {
-	return "GET"
+	return Get
 }
 
 // CheckActExist 检查对于user,act是否合法

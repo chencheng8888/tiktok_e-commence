@@ -9,6 +9,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/golang/mock/gomock"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"sync"
 	"testing"
 	"time"
 )
@@ -176,18 +177,22 @@ func TestVerifyer_VerifyToken(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    bool
+		wantID  int32
 		wantErr error
 	}{
-		{"test_1", args{ctx: ctx, tokenString: "hello1"}, false, token2.ErrInvalidToken},
-		{"test_2", args{ctx: ctx, tokenString: "hello2"}, false, ErrTokenNotFound},
-		{"test_3", args{ctx: ctx, tokenString: "hello3"}, false, ErrTokenInvalid},
-		{"test_4", args{ctx: ctx, tokenString: "hello4"}, true, nil},
+		{"test_1", args{ctx: ctx, tokenString: "hello1"}, token2.InvalidUserID, token2.ErrInvalidToken},
+		{"test_2", args{ctx: ctx, tokenString: "hello2"}, 112, ErrTokenNotFound},
+		{"test_3", args{ctx: ctx, tokenString: "hello3"}, 113, ErrTokenInvalid},
+		{"test_4", args{ctx: ctx, tokenString: "hello4"}, 114, nil},
 	}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	defer wg.Wait()
 
 	mockFuncs := []func(){
 		func() {
-			tn.EXPECT().VerifyJwtToken("hello1", "hello").Return(int32(-1), token2.ErrInvalidToken)
+			tn.EXPECT().VerifyJwtToken("hello1", "hello").Return(token2.InvalidUserID, token2.ErrInvalidToken)
 		},
 		func() {
 			tn.EXPECT().VerifyJwtToken("hello2", "hello").Return(int32(112), nil)
@@ -200,8 +205,14 @@ func TestVerifyer_VerifyToken(t *testing.T) {
 		func() {
 			tn.EXPECT().VerifyJwtToken("hello4", "hello").Return(int32(114), nil)
 			cache.EXPECT().GetValue(ctx, GenerateKey(114)).Return("hello4", nil)
-			cache.EXPECT().ExistKey(ctx, GenerateKey(114)).Return(true)
-			cache.EXPECT().GetTTL(ctx, GenerateKey(114)).Return(3*time.Hour+10*time.Second, nil)
+			cache.EXPECT().ExistKey(ctx, GenerateKey(114)).DoAndReturn(func(context.Context, string) bool {
+				defer wg.Done()
+				return true
+			})
+			cache.EXPECT().GetTTL(ctx, GenerateKey(114)).DoAndReturn(func(ctx2 context.Context, string2 string) (time.Duration, error) {
+				defer wg.Done()
+				return 3*time.Hour + 10*time.Second, nil
+			})
 		},
 	}
 
@@ -217,13 +228,13 @@ func TestVerifyer_VerifyToken(t *testing.T) {
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockFuncs[i]()
-			got, err := v.VerifyToken(tt.args.ctx, tt.args.tokenString)
+			got0, err := v.VerifyToken(tt.args.ctx, tt.args.tokenString)
 			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("VerifyToken() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
-				t.Errorf("VerifyToken() got = %v, want %v", got, tt.want)
+			if got0 != tt.wantID {
+				t.Errorf("VerifyToken() got0 = %v, wantID %v", got0, tt.wantID)
 			}
 		})
 	}

@@ -13,10 +13,10 @@ func (p PayService) String() string {
 // act
 
 func (p PayService) Pay() string {
-	return "PAY"
+	return Pay
 }
 func (p PayService) Cancel() string {
-	return "CANCEL"
+	return Cancel
 }
 
 // CheckActExist 检查对于payService,act是否合法

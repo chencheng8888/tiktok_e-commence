@@ -13,16 +13,16 @@ func (i Item) String() string {
 // act
 
 func (i Item) Create() string {
-	return "CREATE"
+	return Create
 }
 func (i Item) UpdateInfo() string {
-	return "UPDATE"
+	return Update
 }
 func (i Item) Delete() string {
-	return "DELETE"
+	return Delete
 }
 func (i Item) GetInfo() string {
-	return "GET"
+	return Get
 }
 
 // CheckActExist 检查对于item,act是否合法

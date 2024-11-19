@@ -13,13 +13,13 @@ func (s ShoppingCart) String() string {
 // act
 
 func (s ShoppingCart) Create() string {
-	return "CREATE"
+	return Create
 }
 func (s ShoppingCart) Clear() string {
-	return "CLEAR"
+	return Clear
 }
 func (s ShoppingCart) GetInfo() string {
-	return "GET"
+	return Get
 }
 
 // CheckActExist 检查对于ShoppingCart,act是否合法
